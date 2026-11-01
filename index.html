@@ -262,6 +262,16 @@
     #loadBar .lbText b{ font-size:13px; color:#ffd86a; }
     body.loading #loadBarBtn, body.preloading #loadBarBtn{ opacity:.45; pointer-events:none; }
     .pendNote{ margin-top:8px; font-size:12px; color:#ffd86a; font-weight:700; letter-spacing:.5px; text-align:center; }
+    /* 恐竜の大きさ（ティラノサウルスの高さ）：－／＋ と スライダー（目盛りの文字は スライダーの下） */
+    .dszRow{ display:flex; gap:8px; align-items:flex-start; }
+    .dszStep{ flex:0 0 auto; width:38px; height:34px; border-radius:10px; border:1px solid rgba(180,140,255,.45); background:rgba(20,14,44,.6); color:#e2d8ff; font-weight:900; font-size:18px; font-family:inherit; cursor:pointer; }
+    .dszTrack{ flex:1; min-width:0; position:relative; padding-bottom:18px; }
+    .dszTrack input{ width:100%; margin:8px 0 0; accent-color:#7fe0cd; }
+    .dszTicks{ position:absolute; left:9px; right:9px; bottom:0; height:16px; font-size:11px; color:#b9aee0; font-weight:700; pointer-events:none; }
+    .dszTicks span{ position:absolute; top:0; transform:translateX(-50%); white-space:nowrap; }
+    .dszTicks span:first-child{ transform:none; left:-9px !important; } .dszTicks span:last-child{ transform:none; left:auto !important; right:-9px; }
+    #dszInfo{ margin-top:8px; font-size:14px; font-weight:800; color:#7fe0cd; text-align:center; }
+    #dszWarn{ margin-top:6px; font-size:12px; font-weight:700; color:#ffb4a8; text-align:center; line-height:1.5; } #dszWarn:empty{ display:none; }
     .pendNote:empty{ display:none; }
     .applyBtn{ padding:9px 22px; border-radius:9px; border:1px solid #ffd86a; background:linear-gradient(135deg,#7c3aed,#1d4ed8); color:#fff; font-weight:800; font-size:13px; cursor:pointer; }
     .applyBtn:disabled{ background:#160f2e; border-color:rgba(180,140,255,.3); color:rgba(234,228,255,.4); cursor:default; }
@@ -521,22 +531,18 @@ if(!/[?&]cardDebug=[123](&|$)/.test(location.search)) document.body.classList.ad
           <button data-v="off">▶ 止まらない</button>
         </div>
       </div>
-      <div class="opt wide" id="optRealCap" style="display:none">
-        <div class="lbl">恐竜の最大サイズ</div>
-        <div class="seg" id="segRealCap">
-          <button data-v="on" class="on">📏 本物の大きさまで</button>
-          <button data-v="off">∞ 上限なし</button>
+      <!-- 恐竜の大きさ（恐竜のとき。おすすめ設定オン・発掘チャレンジでも表示）：ティラノサウルスの高さを直接えらぶ。まんなか（7割）＝きみ 1.2m〜本物 4.0m（0.1m きざみ）／左はし＝きみの 0.6・0.8倍／右はし＝本物の 2〜5倍 -->
+      <div class="opt wide" id="optDinoSize" style="display:none">
+        <div class="lbl">恐竜の大きさ（ティラノサウルスの高さ）</div>
+        <div class="dszRow">
+          <button type="button" class="dszStep" data-d="-1" aria-label="小さく">－</button>
+          <div class="dszTrack"><input id="dszRange" type="range" min="0" max="1000" step="1" value="500">
+            <div class="dszTicks"><span style="left:0%">×0.6</span><span style="left:15%">🧒きみ</span><span style="left:85%">📏本物</span><span style="left:100%">×5</span></div></div>
+          <button type="button" class="dszStep" data-d="1" aria-label="大きく">＋</button>
         </div>
-        <div id="capPendNote" class="pendNote"></div>
-      </div>
-      <div class="opt wide" id="optRealShort" style="display:none">
-        <div class="lbl">恐竜が実寸になるフィールド短辺（m）</div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input id="rsSlider" type="range" min="10" max="50" step="1" value="20" style="flex:1;">
-          <input id="rsNum" type="number" min="10" max="50" step="1" value="20" style="width:64px;">
-        </div>
-        <div id="rsInfo" style="margin-top:8px; font-size:13px; font-weight:800; color:#7fe0cd; text-align:center;">原寸比：約 1.0倍（実寸）</div>
-        <div id="rsPendNote" class="pendNote"></div>
+        <div id="dszInfo">ティラノサウルス 2.0m</div>
+        <div id="dszWarn"></div>
+        <div id="dszPendNote" class="pendNote"></div>
       </div>
       <div class="opt wide" id="optMode">
         <div class="lbl">モード</div>
@@ -545,7 +551,7 @@ if(!/[?&]cardDebug=[123](&|$)/.test(location.search)) document.body.classList.ad
           <button data-v="time">⏱ タイムアタック</button>
           <button data-v="collect">🗺 コレクション</button>
         </div>
-        <div id="chModeNote" style="display:none; margin-top:8px; font-size:12px; color:#ffcdea; line-height:1.5;">3ターンで発掘に挑戦！相棒を集めて高得点を目指そう！<br>（設定は自動。発掘対象と広さだけ選べます）</div>
+        <div id="chModeNote" style="display:none; margin-top:8px; font-size:12px; color:#ffcdea; line-height:1.5;">3ターンで発掘に挑戦！相棒を集めて高得点を目指そう！<br>（設定は自動。発掘対象・広さ・恐竜の大きさを選べます）</div>
       </div>
       <div class="opt wide" id="optTimeLimit">
         <div class="lbl">制限時間</div>
@@ -899,15 +905,15 @@ if(!/[?&]cardDebug=[123](&|$)/.test(location.search)) document.body.classList.ad
       </section>
       <section>
         <h3>⚙️ 設定（おすすめ設定オフのとき）</h3>
-        <p class="k"><b>発掘する対象</b>：出土品／恐竜。<b>出土品の説明パネル</b>：出土品の説明パネルを出すか。<b>発掘道具の持ち替え</b>：幅広ブラシと細ピックを持ち替えるか。<b>図鑑カード表示中の時間</b>：止まる／止まらない。<b>恐竜の最大サイズ</b>（本物の大きさまで／上限なし。おすすめ設定オンでは本物の大きさまで）<b>・恐竜が実寸になるフィールド短辺</b>：恐竜を出す大きさ。<b>掘り出した恐竜の動き</b>（恐竜のとき）：あるく／とまる（おすすめ設定オンでは「あるく」）。</p>
+        <p class="k"><b>発掘する対象</b>：出土品／恐竜。<b>出土品の説明パネル</b>：出土品の説明パネルを出すか。<b>発掘道具の持ち替え</b>：幅広ブラシと細ピックを持ち替えるか。<b>図鑑カード表示中の時間</b>：止まる／止まらない。<b>恐竜の大きさ</b>（恐竜のとき。おすすめ設定オン・発掘チャレンジでも変えられます）：ティラノサウルスの高さで選びます。スライダーのまんなかは「きみの大きさ」1.2m〜「本物の大きさ」4.0m（0.1m刻み）、左はしは きみの大きさの0.6倍・0.8倍、右はしは本物の2・3・4・5倍です（－／＋で となりの値へ）。ほかの恐竜は本物どおりの大きさの比です。最初は ヘッドセット 2.0m、スマホ・PC 4.0m。広さを変えても恐竜の大きさは変わりません。ワールドの広さより大きい恐竜がいる時は注意が出ます（体長がワールドの短い辺の半分より大きい恐竜は、歩きまわらずに その場で向きを変えたり においをかいだりします。歩く先は いつもワールドの中です）。卵からかえった恐竜は、大きさに合わせて 少し後ろへ跳んで着地します。<b>掘り出した恐竜の動き</b>（恐竜のとき）：あるく／とまる（おすすめ設定オンでは「あるく」）。</p>
         <p class="k"><b>モード</b>・<b>制限時間</b>（60〜180秒）。<b>獲得カードの表示</b>：カード表示／カード非表示。<b>カードのレア度</b>：レア度あり／なし。</p>
         <p class="k"><b>相棒の決め方</b>：しばいぬのみ（相棒はしばいぬだけ）／えらぶ（スタンバイで選ぶ）／ランダム（スタンバイで「カードをひく」）。<b>しばいぬのレベル</b>（しばいぬのみのとき）：固定型＝ステータスは2・2・2のまま／アップ型＝1・1・1から始まり、成績で上がる。<b>相棒の候補</b>：獲得した相棒（しばいぬ＋仲間になった相棒）／全ての相棒。</p>
         <p class="k"><b>スターブロック</b>：スターあり／なし。<b>サイトモデル</b>（遺跡3D）：表示／非表示と大きさ・透過率（0〜90%。サイトを表示しているとき）。透過率の下の「プレイヤーのまわりを透過しない半径」（0〜3m）で、足もとの円の中だけ透過しないようにできます（外側の約20cmで だんだん透けます。0＝使わない）。その下の切り替えで <b>👣 足もと</b>／<b>👀 視線の先</b> をえらぶと、円の中心を 見ている所にもできます（「プレイヤーの視線の先のまわりを透過しない半径」。歩いたり 視線を動かしたりすると 円がついていきます）。<b>発掘場所</b>：ランダム／固定。<b>ワールドの広さ</b>（サイト非表示のとき）。広さや大きさを変えたときは、上に出る<b>「🔄 まとめて更新」</b>で読み込み直します。</p>
-        <p class="k">発掘チャレンジでは、多くの設定が自動で決まります（獲得カード表示・レア度あり・相棒はえらぶ／獲得した相棒・しばいぬは固定型・スターあり）。おすすめ設定オンでは発掘する対象と広さだけ、オフではさらに<b>3ターン目の制限時間・発掘道具の持ち替え・サイトモデル・恐竜の最大サイズ・実寸になるフィールド短辺・掘り出した恐竜の動き</b>を変えられます。</p>
+        <p class="k">発掘チャレンジでは、多くの設定が自動で決まります（獲得カード表示・レア度あり・相棒はえらぶ／獲得した相棒・しばいぬは固定型・スターあり）。おすすめ設定オンでは発掘する対象・広さ・恐竜の大きさ、オフではさらに<b>3ターン目の制限時間・発掘道具の持ち替え・サイトモデル・掘り出した恐竜の動き</b>を変えられます。</p>
       </section>
       <section>
         <h3>🎮 操作・移動</h3>
-        <p class="k">VR/AR：左スティックで歩く／右スティックでスナップ回転。右手中指グリップ＋右スティック上下＝視点の高さ（上に倒すと上がる。地面すれすれから、ブラキオサウルスの高さの1.5倍まで）。<br>PC：WASD＋マウス（クリックで視点固定。見上げられるのは 恐竜で60°・出土品で20°まで。スマホも同じ）<br>スマホ：画面左半分でスティック／右半分をなぞって見回す</p>
+        <p class="k">VR/AR：左スティックで歩く／右スティックでスナップ回転。右手中指グリップ＋右スティック上下＝視点の高さ（上に倒すと上がる。地面すれすれから、ブラキオサウルスの高さの1.5倍まで）。<b>右スティックの押し込み＝床キャリブレーション</b>：右手のコントローラーを床に当てたまま押し込むと、その高さを床にして、ゲームの地面を本当の床に合わせます（「ARで あそぶ」のヘッドセットでも、恐竜が立つ床に使います。ページを開いている間は覚えていて、入り直しても使います）。<br>PC：WASD＋マウス（クリックで視点固定。見上げられるのは 恐竜で60°・出土品で20°まで。スマホも同じ）<br>スマホ：画面左半分でスティック／右半分をなぞって見回す</p>
       </section>
       <section>
         <h3>🗺 たんけん（ARで あそぶ）</h3>
@@ -4056,7 +4062,7 @@ try{ if(navigator.mediaDevices && navigator.mediaDevices.addEventListener)
 const TABAR = { on:false, backend:null, phase:"idle", heldKey:"adult" };
 /* まとめて更新：メニューで読み込みを伴う変更（サイトモデルの大きさ・ワールドの広さ。発掘する対象・モード等のおすすめ設定で変わる場合を含む）は
  * その場では読み込まず、入室ボタン近くの「まとめて更新」で一度に読み込む */
-let _loaded=null;        // 最後に読み込み（モデル生成）に使った設定 {sm:サイト倍率, wx/wz:広さ, rs:実寸になる短辺, cap:最大サイズ＝本物の大きさまで, ds:恐竜の原寸比}
+let _loaded=null;        // 最後に読み込み（モデル生成）に使った設定 {sm:サイト倍率, wx/wz:広さ, dh:恐竜の大きさ（ティラノサウルスの高さ）, ds:恐竜の原寸比}
 let _userEditT=-1e9;     // メニューの設定をユーザーが操作した時刻（起動時の自動設定はすぐ読み込む）   // backend: "webxr"(Android ARCore) | "camera"(カメラ映像＋センサー) / phase: idle|prep|scan|play
 const TABAR_CFG = {
     buddyHold:     0.30,// 相棒の待機：行き先がこれ(m)以上ずれるまでは動かない（タブレットを少し動かしても止まったまま）
@@ -4371,7 +4377,45 @@ function popY(){ return ARTIFACT_POP_Y; }   // 発掘済みの落ち着き高さ
 const GROUND_BELOW_EYE = 1.5;            // 目線から地面までの距離（高さの基準。安定判定にも使用）
 function applyXRHeight(){ if(typeof camera==="undefined"||typeof stage==="undefined") return 0;
     const cy=camera.getWorldPosition(new THREE.Vector3()).y;
+    if(FLOOR_CAL.on && renderer.xr.isPresenting && !TABAR.on){ worldYAdjust=0; stage.position.y=0; return cy; }   // 床キャリブレーション済み：ゲームの地面＝本当の床
     const baseY=cy-GROUND_BELOW_EYE; worldYAdjust=baseY; stage.position.y=baseY; return cy; }
+// ---- 床キャリブレーション（ヘッドセット）：右手コントローラーを 床に当てたまま、右スティックを 押し込む → その高さを 床（y=0）にする ----
+//   基準空間（local-floor）を getOffsetReferenceSpace で 上下に ずらす。ページを開いている間は 覚えて、VR/AR に 入り直しても 使う（読み込み直したら 測り直す）
+//   本編：ゲームの地面＝本当の床（そのあとも 右グリップ＋右スティックで 視点の高さは 変えられる）／ARで あそぶ（ヘッドセット）：恐竜が立つ床＝本当の床
+//   ctrlBottom＝コントローラーの グリップの位置から いちばん下までの だいたいの長さ(m)／minBelowEye＝目より これ以上 下で 押した時だけ 床とみなす
+const FLOOR_CAL={ on:false, off:0, base:null, prev:false, ctrlBottom:0.05, minBelowEye:0.35 };
+function floorCalApply(){   // セッションの はじめ：覚えている床の高さで 基準空間を ずらす
+    FLOOR_CAL.base=null; FLOOR_CAL.prev=true;   // 入った時に 押したままでも 測らない（いちど 離してから）
+    try{ const b=renderer.xr.getReferenceSpace(); FLOOR_CAL.base=b;
+        if(FLOOR_CAL.on && b && b.getOffsetReferenceSpace && window.XRRigidTransform) renderer.xr.setReferenceSpace(b.getOffsetReferenceSpace(new XRRigidTransform({ x:0, y:FLOOR_CAL.off, z:0 }))); }
+    catch(e){ console.warn("[床キャリブレーション]", e); }
+}
+function floorCalTick(frame){   // 毎フレーム（ヘッドセット）：右スティックの 押し込み（buttons[3]）を見る
+    const ses=renderer.xr.getSession(); if(!ses || TABAR.on || (LITE.active && LITE.phone)) return;
+    let src=null; for(const x of ses.inputSources){ if(x.handedness==="right" && x.gamepad && !x.hand){ src=x; break; } }
+    const gp=src && src.gamepad, pr=!!(gp && gp.buttons && gp.buttons[3] && gp.buttons[3].pressed);
+    const was=FLOOR_CAL.prev; FLOOR_CAL.prev=pr; if(!pr || was) return;
+    const ax=gp.axes||[]; if(Math.abs(ax[2]||0)>0.5 || Math.abs(ax[3]||0)>0.5) return;   // スティックを 倒しながらの 押し込み（回転・視点の高さの 操作中）は 使わない
+    floorCalMeasure(frame || (renderer.xr.getFrame && renderer.xr.getFrame()), src);
+}
+function floorCalSay(t){ try{ if(LITE.active) liteVRSay(t, 2600); else if(typeof bubble!=="undefined" && bubble.say) bubble.say(t, 2600, true); else showToast(t); }catch(_){ } }
+function floorCalMeasure(frame, src){
+    const ref=renderer.xr.getReferenceSpace(), b=FLOOR_CAL.base;
+    let gy=null, ey=null;
+    try{ const p=frame && src.gripSpace ? frame.getPose(src.gripSpace, ref) : null; if(p) gy=p.transform.position.y;
+        const v=frame ? frame.getViewerPose(ref) : null; if(v) ey=v.transform.position.y; }catch(_){ }
+    if(gy==null || !b || !b.getOffsetReferenceSpace || !window.XRRigidTransform){ floorCalSay("ゆかの たかさを はかれなかったよ"); return; }
+    const fy=gy-FLOOR_CAL.ctrlBottom;   // いまの基準空間での 床の高さ（コントローラーの いちばん下）
+    if(ey!=null && ey-fy<FLOOR_CAL.minBelowEye){ floorCalSay("コントローラーを ゆかに あてたまま、みぎの スティックを おしこんでね"); return; }
+    const off=FLOOR_CAL.off+fy;   // もとの基準空間（local-floor）での 床の高さ
+    try{ renderer.xr.setReferenceSpace(b.getOffsetReferenceSpace(new XRRigidTransform({ x:0, y:off, z:0 }))); }
+    catch(e){ console.warn("[床キャリブレーション]", e); floorCalSay("ゆかの たかさを あわせられなかったよ"); return; }
+    FLOOR_CAL.off=off; FLOOR_CAL.on=true;
+    if(LITE.active){ try{ LVR.floorHit=null; LVR.fs=[]; }catch(_){ } }   // ARで あそぶ：床＝いま測った床
+    else { worldYAdjust=0; stage.position.y=0; GAME._heightApplyUntil=0; }   // 本編：ゲームの地面＝本当の床（視点の高さは 右グリップ＋右スティックで 変えられる）
+    try{ vibrate(160,0.8); }catch(_){ } try{ chord([523,659,784],0.06,"triangle",0.45); }catch(_){ }
+    floorCalSay("ゆかの たかさを あわせたよ");
+}
 function dinoFootY(){ return (typeof renderer!=="undefined" && worldScaleXR()) ? 1.5 : (popY()-0.05); }   // 恐竜の足元：VR/ARは床から1.5m、PC/スマホは発掘物の高さのすぐ下
 let   WALK_SPEED    = 3.5;               // 歩行速度（m/s）※ワールドサイズで自動調整
 const BASE_WALK=3.5, BASE_DOG_FWD=3.4, BASE_DOG_STAY=7.0;   // 基準＝約34m
@@ -6958,13 +7002,37 @@ function dinoDeformKey(key){ try{ const h=REAL_H[key], hb=REAL_H[DINO_DEFORM.bas
 //   ほかの恐竜の大きさの比：きみ＝デフォルメ（実寸の比の平方根）〜 ほんもの＝実寸の比。間は デフォルメの強さを u で ゆるめる
 const DIG_SIZE={ min:1.2, max:4.0, step:0.1, def:2.0 };
 function digSizeU(h){ return Math.max(0, Math.min(1, ((+h)-DIG_SIZE.min)/(DIG_SIZE.max-DIG_SIZE.min))); }
-function dinoRealScale(){   // 表示倍率 S（表示高さ＝実寸×S）。realRefShort＝恐竜が実寸(1.0)になるフィールド短辺
+// 本編（ヘッドセットのVR/AR・画面操作で発掘する）の恐竜の大きさ：メニューの「恐竜の大きさ」＝ティラノサウルスの高さ(m)を 直接えらぶ（広さとは 関係ない）
+//   ほかの恐竜は 本物の比（デフォルメしない）。スライダー：まんなか（7割）＝きみの大きさ 1.2m〜本物の大きさ 4.0m（0.1m きざみ）／左はし＝きみの 0.6・0.8倍／右はし＝本物の 2・3・4・5倍
+//   pos＝スライダー（0〜1000）の上の位置。既定＝ヘッドセット 2.0m／スマホ・PC 4.0m（おすすめ設定オンでも）
+const DINO_SIZE={ kimi:1.2, real:4.0, step:0.1, small:[0.6,0.8], big:[2,3,4,5], pos:{ small:[0,75], main:[150,850], big:[887.5,925,962.5,1000] }, def:{ headset:2.0, other:4.0 } };
+const DINO_SIZE_STOPS=(()=>{ const D=DINO_SIZE, a=[];
+    D.small.forEach((k,i)=>a.push({ h:+(D.kimi*k).toFixed(2), p:D.pos.small[i], kind:"kimi", k }));
+    const n=Math.round((D.real-D.kimi)/D.step); for(let i=0;i<=n;i++) a.push({ h:+(D.kimi+i*D.step).toFixed(1), p:D.pos.main[0]+(D.pos.main[1]-D.pos.main[0])*i/n, kind:"main" });
+    D.big.forEach((k,i)=>a.push({ h:+(D.real*k).toFixed(1), p:D.pos.big[i], kind:"real", k }));
+    return a; })();
+function dinoSizeStop(h){ h=(+h>0)? +h : DINO_SIZE.def.headset; let b=DINO_SIZE_STOPS[0], bd=Infinity; for(const t of DINO_SIZE_STOPS){ const d=Math.abs(Math.log(t.h/h)); if(d<bd){ bd=d; b=t; } } return b; }   // いちばん近い えらべる値（比で くらべる）
+function dinoSizeShort(h){ const t=dinoSizeStop(h); return "ティラノサウルス "+(t.kind==="main" ? t.h.toFixed(1) : String(t.h))+"m"; }
+function dinoSizeText(h){ const t=dinoSizeStop(h), D=DINO_SIZE;
+    if(t.kind==="kimi") return "きみの大きさの "+t.k+"倍（ティラノサウルス "+t.h+"m）";
+    if(t.kind==="real") return "本物の大きさの "+t.k+"倍（ティラノサウルス "+t.h+"m）";
+    const s="ティラノサウルス "+t.h.toFixed(1)+"m";
+    if(Math.abs(t.h-D.kimi)<1e-6) return s+"（きみの大きさ）";
+    if(Math.abs(t.h-D.real)<1e-6) return s+"（本物の大きさ）";
+    return s+"（本物の約 "+(+(t.h/D.real).toFixed(2))+"倍）"; }
+function dinoRealScale(){   // 表示倍率 S（表示高さ＝実寸×S）。本編：ティラノサウルスの高さ（メニューの「恐竜の大きさ」）÷本物の高さ。ほかの恐竜も同じ倍率（本物の比）
     if(typeof DIG_DINO_SIZE==="number"){ const kb=dinoBigK(); return kb+(1-kb)*digSizeU(DIG_DINO_SIZE); }   // たんけん：ティラノサウルスの高さ＝スライダーの値（恐竜ごとの差は dinoTargetHeight で付ける）
-    let s;
-    if(customWorldOn()) s=Math.max(0.2, Math.min(WORLD_X,WORLD_Z)/realRefShort);   // 実際の短辺がrealRefShortで実寸1.0（小さい親値ほど大きく＝密／大きい親値ほど小さく＝疎）
-    else s=Math.max(0.2, (siteMode||1)*10/realRefShort);   // サイト表示：siteMode=realRefShort/10 で実寸（10mが1倍・50mが5倍に相当）
-    if(realCapToActual) s=Math.min(1.0, s);   // 恐竜の最大サイズ「本物の大きさまで」＝1.0倍を超えない（覗き見スコープ・歩く範囲もbodyLen経由で自動追従）
-    return s;
+    return Math.max(0.01, (+dinoTrexH||DINO_SIZE.def.headset)/realH("trex"));
+}
+const DINO_LEN_RATIO={};   // 恐竜ごとの 体長（前後の長さ）÷高さ（作った時に測る。フィールドより大きいかの 注意に使う）
+function dinoFieldShort(){ return customWorldOn()? Math.min(WORLD_X,WORLD_Z) : Math.min(SITE_X,SITE_Z); }   // フィールドの短い辺(m)
+function dinoBodyLenEst(key){ return realH(key)*dinoRealScale()*(DINO_LEN_RATIO[key]||1.5); }
+function dinoTooBigToWalk(u){ return !TABAR.on && (u.bodyLen||0) > dinoFieldShort()*0.5; }   // 本編：体長が フィールドの短い辺の半分より大きい恐竜は 歩きまわらない（その場で 向きを変える・においを かぐ・こちらを見る）
+function digClampToField(x, z, m){   // 本編：歩く先を フィールドの中に（m＝へりから はなす長さ。広さの 9割まで）
+    if(customWorldOn()){ const f=worldToField(x,z), hx=Math.max(0.2, WORLD_X/2-Math.min(m, WORLD_X/2*0.9)), hz=Math.max(0.2, WORLD_Z/2-Math.min(m, WORLD_Z/2*0.9));
+        return fieldToWorld(Math.max(-hx,Math.min(hx,f.x)), Math.max(-hz,Math.min(hz,f.z))); }
+    const R=fieldRange(); if(R.custom) return { x, z };
+    return { x:Math.max(R.minX,Math.min(R.maxX,x)), z:Math.max(R.minZ,Math.min(R.maxZ,z)) };
 }
 function dinoCurScale(){ return dinoRealScale(); }
 function dinoTargetHeight(key){ return realH(key) * dinoRealScale() * (typeof DIG_DINO_SIZE==="number" ? Math.pow(dinoDeformKey(key), 1-digSizeU(DIG_DINO_SIZE)) : 1); }        // 生成時の目標高さ（m）。たんけん：デフォルメは きみ＝そのまま〜ほんもの＝なし
@@ -6988,6 +7056,7 @@ function makeDigDino(dn){
     // ぬりえの模様は、ここ（発掘モデル・ホログラム共通の生成）では貼らない。相棒・リザルトの相棒・craftARt・ぬりえ画面で個別に貼る
     makeFit(inner, dinoTargetHeight(dn.key)); inner.updateMatrixWorld(true);   // 恐竜サイズ（実寸モードは実物大×倍率）
     const bb=new THREE.Box3().setFromObject(inner);
+    if(isFinite(bb.min.z) && bb.max.y-bb.min.y>1e-6) DINO_LEN_RATIO[dn.key]=(bb.max.z-bb.min.z)/(bb.max.y-bb.min.y);   // 体長÷高さ（大きさに よらない）
     if(isFinite(bb.min.y)) inner.position.y = -bb.min.y;    // 底面をコンテナ原点にそろえる
     const cont=new THREE.Group(); cont.add(inner);
     cont.userData.builtScale=dinoCurScale();   // 生成時のスケール（出現時に現在のスケールへ補正するため）
@@ -7007,6 +7076,7 @@ let WARMUP_DONE=false, ARTIFACTS_DONE=false, CARDS_DONE=false, _finishingPreload
 function _maybeFinishPreload(){ if(!(WARMUP_DONE && ARTIFACTS_DONE && CARDS_DONE)) return; if(_finishingPreload) return; _finishingPreload=true;
     let done=false; const onDone=()=>{ if(done) return; done=true; preProg("buddy", 1); PRELOAD_BASE=true; preloadExtras(); };   // 相棒クローンまで揃ったら → 追加の準備（全部そろってから解錠）
     try{ if(window.__resultBuddy && window.__resultBuddy.preload){ window.__resultBuddy.preload(onDone); } else onDone(); }catch(_){ onDone(); }
+    try{ updateRsInfo(); }catch(_){ }   // 恐竜の 体長÷高さ を測れたので、フィールドより大きいかの 注意を 出し直す
     // 強制解錠（8秒）はやめた：終わるまで必ず待つ。止まった時だけ「もういちど よみこむ」を出す（preStalled）
 }
 // 恐竜・犬種・しばいぬのカードを入室前に作っておく（全部できたら CARDS_DONE → ほかの準備もそろえば入室可能）
@@ -7025,7 +7095,7 @@ function preloadEverything(done){
     if(CARD_ONLY_MODE) return;   // カードだけの画面：ゲームの恐竜・相棒・カード画像の事前生成はしない（カードは1枚ずつその場で作る）
     if(_preloadTimer){ clearTimeout(_preloadTimer); _preloadTimer=null; }
     PRELOAD_DONE=false; PRELOAD_BASE=false; document.body.classList.add("preloading");   // 完了まで入室不可（追加の準備も含めて全部そろうまで）
-    _loaded={ sm:siteMode, wx:WORLD_X, wz:WORLD_Z, rs:realRefShort, cap:realCapToActual, ds:+dinoRealScale().toFixed(3), dm:DIG_DINO_SIZE }; if(typeof loadBarRefresh==="function") loadBarRefresh();   // このサイズ・原寸比でモデルを生成する
+    _loaded={ sm:siteMode, wx:WORLD_X, wz:WORLD_Z, dh:dinoTrexH, ds:+dinoRealScale().toFixed(3), dm:DIG_DINO_SIZE }; if(typeof loadBarRefresh==="function") loadBarRefresh();   // このサイズ・原寸比でモデルを生成する
     _finishingPreload=false; WARMUP_DONE=false; CARDS_DONE=false;   // 再プリロード（対象/モード切替など）でも完全ゲートを再入可能に（一度きりガードで固まるのを防止）
     if(typeof DINOS==="undefined"){ PRELOAD_DONE=true; document.body.classList.remove("preloading"); if(done) done(); return; }
     const jobs=[];
@@ -7232,6 +7302,7 @@ function revealDino(idx, pos, color){
     eggHatch.push({ egg, idx, pos:pos.clone(), color, at:performance.now()+1300, wob:0, backDir });
 }
 const _thBox=new THREE.Box3(),_thCp=new THREE.Vector3();
+const DINO_HATCH={ backBL:0.25, peakH:0.12 };   // 卵から かえる時：後ろへ 跳ぶ長さ（体長×backBL）・跳ぶ高さ（高さ×peakH。0.45m より低くしない）
 function tickHatch(now, dt){
     for(let i=eggHatch.length-1;i>=0;i--){ const e=eggHatch[i];
         if(e.egg){ e.wob+=dt; e.egg.rotation.z=Math.sin(e.wob*11)*0.16*Math.min(1,e.wob*1.5); }  // 孵化前に揺れる
@@ -7259,19 +7330,20 @@ function tickHatch(now, dt){
             // 向き：鼻先(+Z)をプレイヤーへ
             { const cp=camera.getWorldPosition(_thCp); m.rotation.set(0, Math.atan2(cp.x-e.pos.x, cp.z-e.pos.z), 0); }
             // 本体中心Cを発掘ポイントから奥へ(前後長/3)ずらす
-            let cX=e.pos.x, cZ=e.pos.z;
-            if(e.backDir){ const off=depth*(1/2); cX=e.pos.x + e.backDir.x*off; cZ=e.pos.z + e.backDir.z*off; }   // 全種：発掘ポイントから前後長×1/2奥
-            m.position.set(cX, GROUND_Y, cZ);   // 本体中心C（回転中心もここ）
+            let cX=e.pos.x, cZ=e.pos.z, sX=cX, sZ=cZ;
+            if(e.backDir){ const off=depth*(1/2); sX=e.pos.x + e.backDir.x*off; sZ=e.pos.z + e.backDir.z*off;   // 跳びはじめ：発掘ポイントから前後長×1/2奥（いちばん手前の端＝発掘ポイント）
+                const jb=depth*DINO_HATCH.backBL; cX=sX + e.backDir.x*jb; cZ=sZ + e.backDir.z*jb; }   // 着地：さらに 体長×backBL 奥（大きいほど 遠くへ。プレイヤーに からだが かぶらない）
+            m.position.set(sX, GROUND_Y, sZ);   // 本体中心C（回転中心もここ）
             const footY=dinoFootY();   // 恐竜の足元（VR/ARは床から1.6m）
             const flying=!!m.userData.flying;
             const _tabarLow=(typeof TABAR!=="undefined" && TABAR.on);   // タブレットARは床の近くに出す
             const baseY = _tabarLow ? GROUND_Y + (flying ? 0.5 : 0) : footY + (flying ? height : 0);   // たんけん（タブレットAR）：足元は床の上（プテラノドンだけ0.5m 浮く。ぬりえ などと同じ）／それ以外は足元の高さ（飛行種は自分の高さ1つ分だけ上）
             m.userData.baseY=baseY; m.userData.settled=false;
             { const u=m.userData; u._cd=null; u._joy=null; u._noticed=false; u._noticeAt=0; u._faceAmt=0; u._kaK=null; u._kaUntil=0; u._apS=0; u._apCap=null; u._pushUntil=0; u._awVx=0; u._awVz=0; u._awWx=0; u._awWz=0; }   // 前に出た時の 歩き回る中心・見る・よろこぶ などは 消す（同じ恐竜を また掘った時に、前の場所へ もどらないように）
-            m.userData.homeX=cX; m.userData.homeZ=cZ;   // アイドル回転の中心＝C（毎フレーム更新）
+            m.userData.homeX=sX; m.userData.homeZ=sZ;   // アイドル回転の中心＝C（毎フレーム更新。跳んでいる間は popAnims が 着地点へ 動かす）
             m.userData.origX=cX; m.userData.origZ=cZ;   // 気づく前の定位置（離れたら戻る先）
             m.userData.bodyLen=depth;   // 体長（前後長・スケール反映済み）＝対面判定の基準
-            popAnims.push({ obj:m, x:cX, z:cZ, startY:GROUND_Y, peakY:baseY+0.45, endY:baseY, t:0, dur:1.0, dino:true });
+            popAnims.push({ obj:m, x:cX, z:cZ, x0:sX, z0:sZ, startY:GROUND_Y, peakY:baseY+Math.max(0.45, height*DINO_HATCH.peakH), endY:baseY, t:0, dur:1.0, dino:true });   // 後ろへ 跳んで 着地
             sfxCry(); vibrate(220,0.85);
             bubble.say(dinoEmergeLine(dn), 3000, true);   // 発掘結果セリフ＝最優先
             GAME.dogHappyUntil = performance.now()+3000;   // 恐竜名セリフ中は下位セリフ・移動・嗅ぎ・撫でを抑制
@@ -7280,7 +7352,7 @@ function tickHatch(now, dt){
             if(m.userData.nameLabel) stage.remove(m.userData.nameLabel);
             const nm=spotName(e.idx);   // 同じ種類の ぬりえが いくつか ある時は ①②
             const _lblScale = fieldScale();   // 全環境でフィールド寸法に連動
-            const _lw=0.54*_lblScale; const label=makeLabelSprite(nm, e.color, _lw, 0);   // 名称パネル（プレイヤー向きSprite）
+            const _lw=Math.min(0.54*_lblScale, Math.max(0.25, depth)); const label=makeLabelSprite(nm, e.color, _lw, 0);   // 名称パネル（プレイヤー向きSprite）。小さい恐竜では 体長より 大きくしない
             const _lh=_lw*96/256;   // ラベルの高さ
             label.position.set(cX, _tabarLow ? Math.max(baseY-0.1-_lh/2, _lh/2+0.02) : footY-0.1-_lh/2, cZ);   // タブレットAR：恐竜の足元のすぐ下（床にもぐらない）／それ以外は足元の0.1m下（名札の上端）
             if(_tabarLow){ label.renderOrder=450; }   // タブレットAR：深度テストは有効のまま、恐竜の手前（プレイヤー側）に出して隠れないように（暗幕500より奥）
@@ -7708,7 +7780,7 @@ function cardDinoTick(cont, m, now, dt, camW){
     const u=cont.userData; let S=u._cd;
     if(!S){ S=u._cd={ cx:u.origX??cont.position.x, cz:u.origZ??cont.position.z, sniffUntil:0, state:"pause", until:now+1500, gx:0, gz:0 }; }
     const out={ sniff:0, walking:false, noSpin:true, look:false, attend:true };   // attend＝プレイヤーの方を向いて見てよい（とまる：見ている間だけ）
-    if(digMoveMode()!=="move"){ cardDinoStay(cont, u, S, out, now, dt, camW); return out; }   // とまる
+    if(digMoveMode()!=="move" || dinoTooBigToWalk(u)){ cardDinoStay(cont, u, S, out, now, dt, camW); return out; }   // とまる（本編：体長が フィールドの短い辺の半分より大きい恐竜も その場で）
     out.look=(S.state==="look");
     if(u._joy){ out.noSpin=false; return out; }   // よろこんでいる間は その場
     const fin=()=>{   // あるく：見ている間は こちらを向く／歩いている間・休んでいる間は ときどき ちらっと見るだけ（見る回数を 多くしすぎない）
@@ -7741,6 +7813,7 @@ function cardDinoTick(cont, m, now, dt, camW){
                     const Lo=Math.max(f.x1-f.x0, f.z1-f.z0)*(o.scale.x||1)*0.5, rD=(L+Lo)*0.8;
                     return Math.hypot(S.gx-o.position.x, S.gz-o.position.z) < rD || cdSegDist(hx0,hz0,S.gx,S.gz,o.position.x,o.position.z) < rD*0.8; });   // ほかの恐竜と重なる所と、そのそばを通る道も えらばない（歩いて ぶつかって 何度も 止まらないように）
                 if(!nearP && !nearD) break; }
+            if(!TABAR.on){ const c=digClampToField(S.gx, S.gz, L); S.gx=c.x; S.gz=c.z; }   // 本編：歩く先は フィールドの中だけ
             if(!TABAR.on){ u.origX=u.homeX??cont.position.x; u.origZ=u.homeZ??cont.position.z; u._apS=0; u._apCap=null; }   // ゲーム：近づいた所から 歩きはじめる（もとの場所へ もどらない）
             S.state="walk"; }
         return fin();
@@ -8216,14 +8289,15 @@ async function detectHeadset(){
     const isMobileUA  = /Android|iPhone|iPad|iPod|Mobile|Tablet|Silk/i.test(ua);                     // スマホ/タブレットのUA
     IS_HEADSET = vrOk && (isHeadsetUA || !isMobileUA);   // immersive-vr対応 かつ（既知ヘッドセット or 非モバイル）
     headsetDetected=true;   // 以後は自動サイズ適用を許可
+    if(!_dinoHUser){ const h=IS_HEADSET ? DINO_SIZE.def.headset : DINO_SIZE.def.other; if(h!==dinoTrexH){ setDinoTrexH(h); if(_loaded) scheduleWorldReload(); } }   // 恐竜の大きさの既定：ヘッドセット 2.0m／スマホ・PC 4.0m（おすすめ設定オン・オフとも）
     updateEntryButtons();
     if(recoOn){ applyDeviceAutoSize(); if(typeof updateRecoVisibility==="function") updateRecoVisibility(); }   // 検出完了後にメニューへ反映
 }
 detectHeadset();   // 起動時に immersive-vr 対応を判定（let宣言後に呼ぶ・非同期継続は初期化完了後に実行）
 let toolSwapAllowed=false;   // 発掘道具の持ち替え（既定：持ち替えない）。おすすめオフのときだけメニューで変更可
 let holoFreezeTime=true;     // 図鑑カード表示中に時間を止める（既定：止まる）。おすすめオフのときだけ変更可
-let realRefShort=20;         // 恐竜が実寸(1.0倍)になるフィールド短辺(m)。既定20。おすすめオフのときだけ変更可
-let realCapToActual=true;    // 恐竜の最大サイズ：true=本物の大きさまで（1.0倍を超えない。既定・おすすめ）／false=上限なし。おすすめオフのときだけ変更可
+let dinoTrexH=2.0;           // 恐竜の大きさ：ティラノサウルスの高さ(m)（DINO_SIZE_STOPS の どれか）。既定＝ヘッドセット 2.0／スマホ・PC 4.0（端末が わかった時に 決める）。おすすめ設定オンでも 変えられる
+let _dinoHUser=false;        // 恐竜の大きさを メニューで 変えた（端末の既定で 上書きしない）
 let starEnabled=false;   // スターブロック（初期値。起動時のおすすめ設定で「あり」になる）
 let cardShown=true;      // 獲得カード表示（既定：表示）
 let digPosRandom=true;    // サイト表示×恐竜系の発掘場所（true=ランダム/false=固定）。既定ランダム
@@ -8269,13 +8343,12 @@ function applyAutoForTarget(target){   // 発掘対象/モード切替時の推�
         segSelect("segBuddyPool","unlock"); buddyMode="unlock";        // 相棒の候補：獲得した相棒
         segSelect("segSite","hide");      setSiteVisible(false); syncSiteSeg();   // サイトモデル：非表示
         segSelect("segDigPos","random");  digPosRandom=true;
-        realCapToActual=true; segSelect("segRealCap","on");            // 恐竜の最大サイズ：本物の大きさまで
-        if(typeof setRealRefShort==="function") setRealRefShort(20);    // 実寸になるフィールド短辺：20
+        // 恐竜の大きさ（ティラノサウルスの高さ）は 変えない（端末の既定と、メニューで えらんだ値のまま）
     }
     if(typeof updateWorldSizeUI==="function") updateWorldSizeUI();
     // サイトモデルの大きさ・ワールドの広さは変えない（起動時の端末別の初期値＝applyDeviceAutoSize と、メニューでの手動設定だけで決まる）
 }
-function applyChallengePreset(){   // 発掘チャレンジの自動設定。必須項目は常時、5項目（時間/道具/サイト/最大サイズ/短辺）はおすすめオン時のみ自動固定
+function applyChallengePreset(){   // 発掘チャレンジの自動設定。必須項目は常時、4項目（時間/道具/サイト/恐竜の動き）はおすすめオン時のみ自動固定（恐竜の大きさは いつも えらべる）
     segSelect("segCardShow","on");    cardShown=true;                 // 獲得カード：表示
     segSelect("segRarity","on");      rarityOn=true;                  // レア度：あり
     segSelect("segBuddyMode","pick"); buddyRandom=false; dogOnly=false;   // 相棒：えらぶ
@@ -8287,8 +8360,7 @@ function applyChallengePreset(){   // 発掘チャレンジの自動設定。必
         setTimeLimit(90);                                             // 制限時間：90秒
         segSelect("segToolSwap","off");   toolSwapAllowed=false;      // 道具の持ち替え：持ち替えない
         setDigDinoMove("move");                                       // 掘り出した恐竜の動き：あるく
-        realCapToActual=true; segSelect("segRealCap","on");           // 恐竜の最大サイズ：本物の大きさまで
-        if(typeof setRealRefShort==="function") setRealRefShort(20);  // 実寸になるフィールド短辺：20
+        // 恐竜の大きさは 変えない（おすすめ設定オンでも えらべる）
         segSelect("segSite", (chosenDigTarget==="artifact")?"show":"hide"); setSiteVisible(chosenDigTarget==="artifact"); if(typeof syncSiteSeg==="function") syncSiteSeg();   // サイトモデル：出土品=表示／恐竜=非表示
         // サイトモデルの大きさ・ワールドの広さは変えない（起動時の初期値とメニューでの手動設定のまま）
     }
@@ -8308,8 +8380,7 @@ function updateRecoVisibility(){   // オン=最小項目のみ表示／オフ=�
         show("optDigPos",false); show("optTimeLimit",false);
         show("optToolSwap",false); toolSwapAllowed=false; segSelect("segToolSwap","off");   // オンは非表示＝必ず持ち替えない
         show("optHoloFreeze",false); holoFreezeTime=false; segSelect("segHoloFreeze","off");   // オンは非表示＝止まらない（おすすめ）
-        show("optRealShort",false); if(typeof setRealRefShort==="function") setRealRefShort(20);   // オンは非表示＝実寸基準20m固定
-        show("optRealCap",false); realCapToActual=true; segSelect("segRealCap","on");   // オンは非表示＝本物の大きさまで
+        show("optDinoSize", target!=="artifact");   // 恐竜の大きさ：おすすめ設定オンでも 表示（恐竜のとき）
         show("optDinoMove",false); setDigDinoMove("move");   // オンは非表示＝あるく
         show("siteAlphaOpt",false); if(siteAlphaPct) setSiteAlpha(0); if(siteSolidR) setSiteSolidR(0); if(siteSolidAt!=="foot") setSiteSolidAt("foot");   // オンは非表示＝透過なし（円の中心も 足もとに戻す）
         setTimeLimit(90);   // おすすめオンは90秒固定
@@ -8326,8 +8397,7 @@ function updateRecoVisibility(){   // オン=最小項目のみ表示／オフ=�
         show("optDigPos", (target!=="artifact") && siteVisible);   // 恐竜系×サイト表示のみ
         show("optToolSwap", true);   // おすすめオフのときだけ表示・切替可
         show("optHoloFreeze", true);
-        show("optRealShort", chosenDigTarget!=="artifact");   // 恐竜系のときだけ表示
-        show("optRealCap", chosenDigTarget!=="artifact");   // 恐竜系のときだけ表示
+        show("optDinoSize", chosenDigTarget!=="artifact");   // 恐竜の大きさ：恐竜系のときだけ表示
         show("optDinoMove", chosenDigTarget!=="artifact");   // 掘り出した恐竜の動き：恐竜系のときだけ表示
         show("optTimeLimit", chosenMode==="time");   // タイムアタック時のみ
         show("siteSizeOpt", siteVisible);
@@ -8336,17 +8406,16 @@ function updateRecoVisibility(){   // オン=最小項目のみ表示／オフ=�
     }
     if(isChallenge){   // 発掘チャレンジ：必須6項目は常にロック。5項目はおすすめオンで非表示／オフで表示・変更可
         ["optHoloFreeze","optCardShow","optRarity","optBuddyMode","optBuddyPool","optStar","optDogLevel","optDigPos","optArtLine"].forEach(id=>show(id,false));
-        if(recoOn){ ["optTimeLimit","optToolSwap","optSite","optRealCap","optRealShort","optDinoMove","siteAlphaOpt"].forEach(id=>show(id,false)); if(siteAlphaPct) setSiteAlpha(0); if(siteSolidR) setSiteSolidR(0); if(siteSolidAt!=="foot") setSiteSolidAt("foot"); }
+        if(recoOn){ ["optTimeLimit","optToolSwap","optSite","optDinoMove","siteAlphaOpt"].forEach(id=>show(id,false)); if(siteAlphaPct) setSiteAlpha(0); if(siteSolidR) setSiteSolidR(0); if(siteSolidAt!=="foot") setSiteSolidAt("foot"); }
         else {
             show("optTimeLimit",true);   // 3ターン目の制限時間
             show("optToolSwap",true);
             show("optSite",true);
-            show("optRealShort", chosenDigTarget!=="artifact");
-            show("optRealCap", chosenDigTarget!=="artifact");
             show("optDinoMove", chosenDigTarget!=="artifact");   // 掘り出した恐竜の動き
             show("siteAlphaOpt", siteVisible);   // サイトモデルの透過率
         }
         show("optMode",true);
+        show("optDinoSize", chosenDigTarget!=="artifact");   // 恐竜の大きさ：発掘チャレンジでも（おすすめ設定オン・オフとも）えらべる
     }
     show("optReco",true);   // おすすめトグルは常に表示（どのモードでも消えない）
 }
@@ -8376,18 +8445,26 @@ document.querySelectorAll("#segStar button").forEach(b=>b.onclick=()=>{ document
 document.querySelectorAll("#segToolSwap button").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#segToolSwap button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); toolSwapAllowed=(b.dataset.v==="on"); });
 document.querySelectorAll("#segDinoMove button").forEach(b=>b.onclick=()=>{ setDigDinoMove(b.dataset.v); });   // 掘り出した恐竜の動き（あるく／とまる）
 document.querySelectorAll("#segHoloFreeze button").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#segHoloFreeze button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); holoFreezeTime=(b.dataset.v==="on"); });
-document.querySelectorAll("#segRealCap button").forEach(b=>b.onclick=()=>{ document.querySelectorAll("#segRealCap button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); realCapToActual=(b.dataset.v==="on"); if(typeof updateRsInfo==="function") updateRsInfo(); });
-function setRealRefShort(v){ v=Math.max(10,Math.min(50,Math.round(v||20))); realRefShort=v; const s=document.getElementById("rsSlider"),n=document.getElementById("rsNum"); if(s)s.value=v; if(n)n.value=v; if(typeof updateRsInfo==="function") updateRsInfo(); }
-function updateRsInfo(){   // 恐竜の原寸比（現在のフィールド短辺/基準・上限反映後）を表示
-    const el=document.getElementById("rsInfo"); if(!el) return;
-    const s=(typeof dinoRealScale==="function")?dinoRealScale():1;
-    el.textContent = "原寸比：約 "+s.toFixed(1)+"倍" + (Math.abs(s-1)<0.06?"（実寸）":"");
+function setDinoTrexH(h, user){ dinoTrexH=dinoSizeStop(h).h; if(user) _dinoHUser=true; updateRsInfo(); }   // 恐竜の大きさ（ティラノサウルスの高さ）。えらべる値に そろえる
+function updateRsInfo(){   // 恐竜の大きさの表示（スライダーの位置・説明・フィールドより大きい時の注意）
+    const t=dinoSizeStop(dinoTrexH), r=document.getElementById("dszRange");
+    if(r && +r.value!==t.p) r.value=String(t.p);
+    const el=document.getElementById("dszInfo"); if(el) el.textContent=dinoSizeText(dinoTrexH);
+    const w=document.getElementById("dszWarn");
+    if(w){ let mx=0; if(typeof DINOS!=="undefined" && DIG_DINO_SIZE==null) DINOS.forEach(d=>{ mx=Math.max(mx, dinoBodyLenEst(d.key)); });
+        const F=dinoFieldShort(); w.textContent = (mx>F) ? ("⚠ "+(customWorldOn()? "ワールドの広さ（"+WORLD_X+"×"+WORLD_Z+"m）" : "サイトモデル")+"より大きい恐竜がいます。はみ出したり、歩きまわらずに その場で過ごしたりします") : ""; }
     if(typeof loadBarRefresh==="function") loadBarRefresh();
 }
-{ const s=document.getElementById("rsSlider"),n=document.getElementById("rsNum"); if(s)s.oninput=()=>setRealRefShort(+s.value); if(n)n.onchange=()=>setRealRefShort(+n.value); }
+{ const r=document.getElementById("dszRange");
+  const near=()=>{ let b=DINO_SIZE_STOPS[0], bd=Infinity; for(const t of DINO_SIZE_STOPS){ const d=Math.abs(t.p-(+r.value)); if(d<bd){ bd=d; b=t; } } return b; };   // いちばん近い 止まる所
+  if(r){ r.oninput=()=>{ const t=near(); r.value=String(t.p); setDinoTrexH(t.h, true); };   // まんなかは 0.1m きざみ、両はしは 決まった値だけ
+         r.onchange=()=>{ setDinoTrexH(near().h, true); scheduleWorldReload(); }; }   // 離したら 反映（メニューでは「まとめて更新」まで 保留）
+  document.querySelectorAll("#optDinoSize .dszStep").forEach(b=>b.onclick=()=>{   // －／＋：となりの値へ
+      const i=DINO_SIZE_STOPS.indexOf(dinoSizeStop(dinoTrexH)), j=Math.max(0, Math.min(DINO_SIZE_STOPS.length-1, i+(+b.dataset.d)));
+      setDinoTrexH(DINO_SIZE_STOPS[j].h, true); scheduleWorldReload(); }); }
 // メニュー項目の並び替え（order の順に並べる）
 (function(){
-    const order=["optReco","optDig","optArtLine","optDinoMove","optMode","optTimeLimit","optHoloFreeze","optCardShow","optRarity","optBuddyMode","optDogLevel","optBuddy","optBuddyPool","optStar","optToolSwap","optSite","siteSizeOpt","siteAlphaOpt","worldSizeOpt","optRealCap","optRealShort","optDigPos"];
+    const order=["optReco","optDig","optArtLine","optDinoMove","optMode","optTimeLimit","optHoloFreeze","optCardShow","optRarity","optBuddyMode","optDogLevel","optBuddy","optBuddyPool","optStar","optToolSwap","optSite","siteSizeOpt","siteAlphaOpt","worldSizeOpt","optDinoSize","optDigPos"];
     const first=document.getElementById(order[0]); const parent=first&&first.parentNode; if(!parent) return;
     order.forEach(id=>{ const el=document.getElementById(id); if(el && el.parentNode===parent) parent.appendChild(el); });   // .cardgridの子は全てoptなので順に末尾へ動かせば指定順になる
 })();
@@ -8478,8 +8555,7 @@ function loadDiffs(){   // 読み込み済みと現在の違い（表示用）�
     const L=_loaded, a=[]; if(!L) return a;
     if(L.sm!==siteMode) a.push({ key:"site", text:"サイトモデルの大きさ："+L.sm+"倍 → "+siteMode+"倍" });
     if(L.wx!==WORLD_X || L.wz!==WORLD_Z) a.push({ key:"world", text:"ワールドの広さ："+L.wx+"×"+L.wz+"m → "+WORLD_X+"×"+WORLD_Z+"m" });
-    if(L.rs!==realRefShort) a.push({ key:"rs", text:"恐竜が実寸になるフィールド短辺："+L.rs+"m → "+realRefShort+"m" });
-    if(L.cap!==realCapToActual) a.push({ key:"cap", text:"恐竜の最大サイズ："+(L.cap?"本物の大きさまで":"上限なし")+" → "+(realCapToActual?"本物の大きさまで":"上限なし") });
+    if(L.dh!==dinoTrexH) a.push({ key:"dsz", text:"恐竜の大きさ："+dinoSizeShort(L.dh)+" → "+dinoSizeShort(dinoTrexH) });
     if((L.dm||null)!==(DIG_DINO_SIZE||null)) a.push({ key:"dsize", text:"たんけんの恐竜の大きさ" });   // たんけんの始め・終わり（恐竜の大きさを作り直す）
     // 上のどれにも当てはまらないが恐竜の生成サイズが変わる場合（サイトモデルの表示／非表示の切替など）
     const ds=+dinoRealScale().toFixed(3);
@@ -8494,7 +8570,7 @@ function loadBarRefresh(){
     const sn=document.getElementById("ssPendNote"), wn=document.getElementById("wsPendNote");   // 各項目の横には「未更新」だけ表示
     const note=(el,keys)=>{ if(el) el.textContent = d.some(x=>keys.includes(x.key)) ? "未更新（上の「まとめて更新」で反映）" : ""; };
     note(sn,["site"]); note(wn,["world"]);
-    note(document.getElementById("rsPendNote"),["rs"]); note(document.getElementById("capPendNote"),["cap"]);
+    note(document.getElementById("dszPendNote"),["dsz"]);
 }
 function loadApplyAll(){   // 保留中の読み込みを一度に実行
     if(!loadDiffs().length) return false;
@@ -8511,8 +8587,7 @@ function loadApplyAll(){   // 保留中の読み込みを一度に実行
 function loadRevertAll(){   // 読み込まずに、読み込み済みの設定へ値を戻す（モデルはその設定で生成済み）
     const L=_loaded; if(!L) return;
     setSiteMode(L.sm, false); setWorldX(L.wx, true); setWorldZ(L.wz, true);
-    realCapToActual=L.cap; segSelect("segRealCap", L.cap?"on":"off");
-    setRealRefShort(L.rs);
+    setDinoTrexH(L.dh);
     if(_worldReloadT){ clearTimeout(_worldReloadT); _worldReloadT=null; }
     loadBarRefresh();
 }
@@ -8641,6 +8716,7 @@ document.getElementById("loadBarBtn").onclick=()=>{ loadApplyAll(); };
 let _savedBg=null, _savedFog=null;
 renderer.xr.addEventListener("sessionstart", ()=>{ unlockAudio();
     if(TABAR.on) return;   // タブレットARのセッションは tabarStartWebXR 側で初期化（Quest用の入室処理は行わない）
+    floorCalApply();   // 床キャリブレーション：覚えている床の高さで 基準空間を ずらす（高さを決める前に）
     const session=renderer.xr.getSession();
     try{ dexPalmReset(); }catch(_){}   // 発掘図鑑は 閉じた状態から（手のひらを向けると開く）
     try{ renderer.xr.setReferenceSpaceType("local-floor"); }catch(_){}   // 床基準を確実に
@@ -10770,6 +10846,7 @@ function liteVRWalking(){ return !!(LPH.walk && !LPH.walk.off && window.MV_ANIM!
 //   ・床の点が見えない間（上を向いている等）は、最後に測った床を使う。基準座標の作り直し（向きのリセット等）では測り直す
 const LVR_FLOOR={ win:3000, bin:0.03, min:6, ease:0.2 };
 function liteVRFloor(){
+    if(FLOOR_CAL.on){ LPH.floorFound=true; LPH.floorY=player.getWorldPosition(_lvA).y; return; }   // 床キャリブレーション済み：床＝基準空間の 高さ0（右スティックで 測った床）
     const fr=renderer.xr.getFrame && renderer.xr.getFrame(), ref=renderer.xr.getReferenceSpace(), now=performance.now();
     if(ref && LVR.ref!==ref){ LVR.ref=ref; try{ ref.addEventListener("reset", ()=>{ if(LVR.ref===ref){ LVR.fs=[]; LVR.floorHit=null; } }); }catch(_){ } }
     LVR.fs=LVR.fs||[];
@@ -12440,7 +12517,7 @@ renderer.domElement.addEventListener("webglcontextrestored", ()=>requestTitleDra
 if(CARD_ONLY_MODE) setTimeout(()=>renderer.setAnimationLoop(null), 0);   // カードだけの画面：ゲームの描画ループは回さない（下で登録した直後に外す）
 renderer.setAnimationLoop((_t, _xrFrame)=>{
     if(CARD_ONLY_MODE) return;
-    if(LITE.active){ liteArTick(); if(LITE.phone) litePhonePreRender(); renderer.render(scene,camera); if(LITE.phone) litePhoneAfterRender(_xrFrame); return; }   // スマホ：写真・動画の撮影   // Lite AR：ゲームを止めてモデルビューアのみ描画
+    if(LITE.active){ if(!LITE.phone && renderer.xr.isPresenting) floorCalTick(_xrFrame); liteArTick(); if(LITE.phone) litePhonePreRender(); renderer.render(scene,camera); if(LITE.phone) litePhoneAfterRender(_xrFrame); return; }   // スマホ：写真・動画の撮影   // Lite AR：ゲームを止めてモデルビューアのみ描画
     if(window.__mvPreviewPause) return;   // 「発掘モデル表示」プレビュー中はゲーム描画を止め、メモリを空ける（追加機能）
     if(TABAR.ending) return;              // タブレットAR（WebXR）の終了処理中は描画しない（終了直後にタブが落ちる対策）
     if(nuriScanShown()){ lastTime=performance.now(); return; }   // ぬりえの読み取り画面（全画面）：裏のゲームは描かない
@@ -12453,6 +12530,7 @@ renderer.setAnimationLoop((_t, _xrFrame)=>{
     const now=performance.now();
     const dt=Math.min(0.05,(now-lastTime)/1000); lastTime=now;
     const isVR=questXR();
+    if(isVR) floorCalTick(_xrFrame);   // 床キャリブレーション（右スティックの押し込み）
     if(TABAR.on) tabarTick(dt, now);   // タブレットAR：カメラ姿勢・床検出・反応表示・安全チェック
     if(GAME.desktop && !isVR && now-_roundLayoutT>200){ _roundLayoutT=now; layoutRoundPanel(); }   // ROUNDパネルと相棒えらびパネルの重なり回避（0.2秒ごと）
 
@@ -12462,7 +12540,10 @@ renderer.setAnimationLoop((_t, _xrFrame)=>{
         // 上昇→頂点→着地（イージング）
         const y = r<0.5 ? THREE.MathUtils.lerp(a.startY,a.peakY, r*2)
                         : THREE.MathUtils.lerp(a.peakY,a.endY,(r-0.5)*2);
-        a.obj.position.set(a.x, y, a.z); if(a.spin) a.obj.rotation.y+=0.12;   // たまごのみ回転（恐竜/出土品は正面向きを維持）
+        if(a.x0!=null){ const k=1-(1-r)*(1-r), hx=THREE.MathUtils.lerp(a.x0,a.x,k), hz=THREE.MathUtils.lerp(a.z0,a.z,k);   // 恐竜：後ろへ 跳ぶ（横の動きは はじめ速く、着地で ゆっくり）
+            a.obj.position.set(hx, y, hz); if(a.obj.userData){ a.obj.userData.homeX=hx; a.obj.userData.homeZ=hz; } }
+        else a.obj.position.set(a.x, y, a.z);
+        if(a.spin) a.obj.rotation.y+=0.12;   // たまごのみ回転（恐竜/出土品は正面向きを維持）
         if(r>=1){ if(a.dino && a.obj.userData){ a.obj.userData.settled=true; a.obj.userData.settleAt=now; } popAnims.splice(i,1); }
     }
     tickHatch(now, dt);        // 恐竜モード：たまごの揺れ＆孵化
@@ -14703,7 +14784,7 @@ window.addEventListener("litephoneend", ()=>{ if(!LDIG.leaving) return; LDIG.lea
 function ldigSnapshot(){
     LDIG.snap={
         v:{ recoOn, chosenMode, chosenDigTarget, chosenTool, TIME_LIMIT, cardShown, buddyRandom, dogOnly, starEnabled, toolSwapAllowed, holoFreezeTime,
-            rarityOn, buddyMode, showArtInfo, siteVisible, digPosRandom, realCapToActual, realRefShort, dogLevelUp, WORLD_X, WORLD_Z, siteMode, companionKind, dugDinoMove, siteAlphaPct, siteSolidR, siteSolidAt },
+            rarityOn, buddyMode, showArtInfo, siteVisible, digPosRandom, dinoTrexH, dogLevelUp, WORLD_X, WORLD_Z, siteMode, companionKind, dugDinoMove, siteAlphaPct, siteSolidR, siteSolidAt },
         seg:[...document.querySelectorAll("#menu .seg button")].map(b=>[b, b.classList.contains("on")]),
         inp:[...document.querySelectorAll("#menu input")].map(e=>[e, e.value, e.checked]),
         disp:[...document.querySelectorAll("#menu .opt, #worldSizeOpt, #siteSizeOpt")].map(e=>[e, e.style.display]) };
@@ -14727,7 +14808,7 @@ function ldigApply(){
 function ldigSetVars(v){
     recoOn=v.recoOn; chosenMode=v.chosenMode; chosenTool=v.chosenTool; cardShown=v.cardShown; buddyRandom=v.buddyRandom; dogOnly=v.dogOnly;
     starEnabled=v.starEnabled; toolSwapAllowed=v.toolSwapAllowed; holoFreezeTime=v.holoFreezeTime; rarityOn=v.rarityOn; buddyMode=v.buddyMode;
-    showArtInfo=v.showArtInfo; digPosRandom=v.digPosRandom; realCapToActual=v.realCapToActual; dogLevelUp=v.dogLevelUp;
+    showArtInfo=v.showArtInfo; digPosRandom=v.digPosRandom; dogLevelUp=v.dogLevelUp;
     if(v.dugDinoMove) dugDinoMove=v.dugDinoMove;   // 掘り出した恐竜の動き（ボタンの表示は seg の復元で戻る）
     if(v.siteAlphaPct!=null && v.siteAlphaPct!==siteAlphaPct) setSiteAlpha(v.siteAlphaPct);   // サイトモデルの透過率
     if(v.siteSolidR!=null && v.siteSolidR!==siteSolidR) setSiteSolidR(v.siteSolidR);     // プレイヤーのまわりを透過しない半径
@@ -14735,7 +14816,7 @@ function ldigSetVars(v){
     if(chosenDigTarget!==v.chosenDigTarget || curTarget!==(v.chosenDigTarget==="dino"?"dino":"artifact")) setDigTarget(v.chosenDigTarget);
     chosenDigTarget=v.chosenDigTarget;
     if(siteVisible!==v.siteVisible) setSiteVisible(v.siteVisible);
-    setTimeLimit(v.TIME_LIMIT); setRealRefShort(v.realRefShort);
+    setTimeLimit(v.TIME_LIMIT); setDinoTrexH(v.dinoTrexH);
     setWorldX(v.WORLD_X, true); setWorldZ(v.WORLD_Z, true); setSiteMode(v.siteMode, false);
     if(companionKind!==v.companionKind && typeof setCompanion==="function"){ try{ setCompanion(v.companionKind); }catch(_){ } }
 }
