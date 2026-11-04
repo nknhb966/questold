@@ -19123,8 +19123,15 @@ function evBc(){
         if(m.type==="rankAlive"){ EV.rankSeen=Date.now();
             if(EV.ui && EV.ui.root.classList.contains("tce-preview")){ evPreview(false); evStatus("ランキング画面が開いているので、2画面プレビューを止めました"); } }
         else if(m.type==="rankBye") EV.rankSeen=0;
+        else if(m.type==="sfx") evSfxRelay(m);   // ランキング画面で、まだ音が出せない時の卵・恐竜の効果音
         else if(m.type==="rankPlace" && m.text) evStatus(m.text); };   // ランキング画面がサブ画面へ移った結果
     return EV.bc;
+}
+// ランキング画面から頼まれた卵・恐竜の効果音（rwSfx）を、この画面で鳴らす。「音：なし」の時・遅れて届いた時は鳴らさない
+function evSfxRelay(m){
+    if(!EV.ui || EV.mute || !Object.prototype.hasOwnProperty.call(RW_SFX, m.name) || !(Date.now()-(m.at||0)<1500)) return;
+    if(audioCtx.state!=="running"){ try{ const p=audioCtx.resume(); if(p && p.catch) p.catch(()=>{}); }catch(_){ } return; }   // 止まっている間に鳴らすと、あとでまとめて鳴るので鳴らさない
+    try{ RW_SFX[m.name](m.key, m.i); }catch(e){ console.warn("[イベントカード] 効果音", e); }
 }
 function evRankOpen(){ return !!(EV.rankSeen && Date.now()-EV.rankSeen<EV_RANK_ALIVE_MS); }
 
@@ -19132,6 +19139,7 @@ function evRankOpen(){ return !!(EV.rankSeen && Date.now()-EV.rankSeen<EV_RANK_A
 function evOpen(){
     if(!document.getElementById("tcEventStyle")){ const st=document.createElement("style"); st.id="tcEventStyle"; st.textContent=EV_CSS; document.head.appendChild(st); }
     try{ EV.mute=localStorage.getItem(EV_MUTE_KEY)==="1"; }catch(_){ }
+    try{ sfxBus(); }catch(_){ }   // ランキング画面から頼まれる卵・恐竜の効果音（evSfxRelay）の出口を先に作っておく（最初の音だけ小さくならないように）
     const root=el("div"); root.id="tcEvent"; root.setAttribute("role","application"); root.setAttribute("aria-label","カード作成（イベント）");
     // 上の帯
     const bar=el("div","tce-bar"); bar.appendChild(el("h1",null,"カード作成"));
@@ -19140,6 +19148,7 @@ function evOpen(){
     only.addEventListener("click",()=>{ const on=only.getAttribute("aria-pressed")!=="true"; only.setAttribute("aria-pressed",String(on)); grid.toggleAttribute("data-only-unsaved", on); });
     const mute=el("button",null,""); mute.type="button";
     const putMute=()=>{ mute.textContent=EV.mute? "音：なし" : "音：あり"; mute.setAttribute("aria-pressed",String(!EV.mute)); };
+    mute.title="読み取りの音と、ランキング画面（2画面プレビューも）の卵・恐竜の効果音を、出す／出さない";
     mute.addEventListener("click",()=>{ EV.mute=!EV.mute; try{ localStorage.setItem(EV_MUTE_KEY, EV.mute?"1":"0"); }catch(_){ } putMute(); }); putMute();
     const blank=el("button",null,""); blank.type="button";   // ぬっていない白い所：これから作るカードの値（既定＝ぬりえどおり）。今あるカードは、カードごとのボタンか一括変更で
     const putBlank=()=>{ const on=!!(N() && N().blankOrig()); blank.textContent=on? "これから：模様" : "これから：白地"; blank.setAttribute("aria-pressed",String(on));
@@ -20270,6 +20279,7 @@ const RW_YAW=-65*Math.PI/180, RW_TILT=12*Math.PI/180;   // 少し斜め・少し
 const RW={ base:new Map(), cache:new Map(), on:false, r:null, scene:null, cam:null, W:0, H:0, band:0, dinoH:0, rc:0, P:0, list:[], raf:0, last:0, acc:0, synced:false, busy:Promise.resolve() };
 function rwInit(){
     if(RW.on) return; RW.on=true;
+    try{ sfxBus(); }catch(_){ }   // 卵・恐竜の効果音の出口を先に作っておく（作った直後に鳴らすと、最初の音だけ小さくなるため）
     const cv=document.createElement("canvas"); cv.className="rk-walk"; RK.root.appendChild(cv);
     const r=new THREE.WebGLRenderer({ canvas:cv, antialias:false, alpha:true, powerPreference:RK_PREVIEW? "low-power" : "high-performance" });   // 別ウィンドウ（本番）は性能の高い GPU を希望する（GPU が2つあるPC用。最終的にはOSの設定で決まる）   // 画面全体のなめらか処理（アンチエイリアス）はしない。代わりに恐竜の所だけ少し細かく描く（rwPixelRatio）
     r.setPixelRatio(rwPixelRatio()); r.setClearColor(0x000000,0); try{ r.outputColorSpace=THREE.SRGBColorSpace; }catch(_){ }
@@ -20543,8 +20553,9 @@ function rwEggOff(w){ if(!w.egg) return; w.turn.remove(w.egg); w.egg.traverse(o=
 function rwStageStart(w){
     RW.list.forEach(o=>{ if(o!==w && o.state==="stage") rwStageEnd(o); });   // 前にまん中にいた恐竜は、縁へ
     rwEggOff(w); rwEggOn(w);
-    Object.assign(w,{ state:"stage", phase:"egg", t:0, pt:0, si:0, actT:0, act:null, spin:0 });
+    Object.assign(w,{ state:"stage", phase:"egg", t:0, pt:0, si:0, actT:0, act:null, spin:0, sLand:false, sRat:0 });   // sLand・sRat：着地・ゆれる の効果音を鳴らしたか
     rwDim();
+    rwSfx("egg", w.key);   // 効果音：卵が出る
 }
 function rwStageEnd(w){
     if(w.state!=="stage") return;
@@ -20569,7 +20580,11 @@ function rwStageTick(w, dt){
             if(e){ e.position.y = r<0.5? w.eggH*0.9*(r*2) : w.eggH*0.9*(1-(r-0.5)*2);
                 if(r<1) e.rotation.y+=0.12*(dt*60);
                 w.wob+=dt; e.rotation.z=Math.sin(w.wob*11)*0.16*Math.min(1,w.wob*1.5); }
-            if(w.t>=1.3*T){ rwEggOff(w); w.phase="born"; w.pt=0; }
+            if(r>=1 && !w.sLand && w.t<1.3*T){ w.sLand=true; rwSfx("land"); }   // 効果音：着地
+            while(w.sRat<RW_SFX_RATTLE.length && w.wob>=RW_SFX_RATTLE[w.sRat]){   // 効果音：ゆれる（いちばん傾いた時）。コマが大きく飛んだ分は鳴らさない
+                if(w.wob-RW_SFX_RATTLE[w.sRat]<0.2 && w.t<1.3*T) rwSfx("rattle", w.key, w.sRat);
+                w.sRat++; }
+            if(w.t>=1.3*T){ rwEggOff(w); w.phase="born"; w.pt=0; rwSfx("hatch", w.key); }   // 効果音：割れて、恐竜が生まれる
         } else if(w.phase==="born"){   // 跳ねて登場
             w.pt+=dt; const r=Math.min(w.pt/(1.0*T),1); bob=(r<0.5? r*2 : 1-(r-0.5)*2)*H*0.35;
             if(r>=1){ w.phase="act"; w.si=0; w.actT=0; }
@@ -20603,6 +20618,96 @@ function rwStageTick(w, dt){
     if(u.head){ u.head.rotation.y=look; u.head.rotation.x=sniff; }
     w.turn.rotation.set(RW_TILT, RW_YAW+(w.spin||0), 0);
     w.base.position.y=bob; if(w.k) w.base.scale.setScalar(w.k);
+}
+/* ---- 卵・恐竜の効果音（新しいカードの恐竜を、まん中に大きく出す時）----
+ *   卵が出る「ひゅわん♪」→ 着地「コトッ」→ ゆれる「カタッ・カタッ・カタッ」→ 割れる「パキッ」＋恐竜の鳴き声 →「パパパ・パーン♪」
+ *   ・新しく読み込んだカードと、読み込み再現の時（どちらも rwStageStart）。縁を歩いている恐竜・参加者0枚の時の見せ方では鳴らさない
+ *   ・音はその場で作る（Web Audio。音のファイルは使わない）。鳴き声の高さ・長さは恐竜ごと（RW_SFX_CRY）
+ *   ・カード作成画面の「音：なし」の時は鳴らさない（同じブラウザに保存してある EV_MUTE_KEY を見る）
+ *   ・ランキング画面で音がまだ出せない時（別ウィンドウを一度もクリックしていない等。ブラウザは、その画面を操作するまで音を出させない）は、
+ *     カード作成画面に頼んで鳴らしてもらう（BroadcastChannel の "sfx"。同じPCのスピーカーから出る）。どちらか片方だけで鳴らす */
+const RW_SFX_VOL=0.9;   // 効果音の音量（0〜1）
+const RW_SFX_CRY={      // 鳴き声：p＝高さの倍率（大きい恐竜ほど低く）・len＝長さの倍率・fly＝プテラノドン（キェーッ）
+    trex:{ p:0.8, len:1.15 }, fukuiraptor:{ p:1.45, len:0.75 }, fukuititan:{ p:0.6, len:1.3 }, fukuisaurus:{ p:1.05, len:0.95 },
+    brachi:{ p:0.62, len:1.35 }, stego:{ p:0.95, len:1.0 }, tri:{ p:0.86, len:1.05 }, ptera:{ p:1.0, len:0.9, fly:true } };
+// ゆれる音を鳴らす時刻（卵が出てからの秒）：卵がいちばん傾く時（rwStageTick の sin(w.wob*11) の山と谷）のうち、着地してから割れるまで
+const RW_SFX_RATTLE=(()=>{ const a=[]; for(let k=0;k<20;k++){ const t=(Math.PI/2+k*Math.PI)/11; if(t>0.7*RW_HATCH_T+0.1 && t<1.3*RW_HATCH_T-0.04) a.push(t); } return a; })();
+const SFXB={ out:null, noise:null };
+function sfxBus(){   // 効果音の出口（音量→重なっても割れないように圧縮→スピーカー）と、使い回すノイズ
+    if(SFXB.out) return SFXB;
+    const A=audioCtx, g=A.createGain(), c=A.createDynamicsCompressor(); g.gain.value=RW_SFX_VOL;
+    c.threshold.value=-12; c.knee.value=8; c.ratio.value=4; c.attack.value=0.003; c.release.value=0.25;
+    g.connect(c); c.connect(A.destination);
+    const n=A.createBuffer(1, Math.floor(A.sampleRate*2), A.sampleRate), d=n.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    SFXB.out=g; SFXB.noise=n; return SFXB;
+}
+// 音の部品：音程が f0→f1 へ動く音（att＝立ち上がり・dur＝長さ。秒）
+function sfxTone(t, f0, f1, dur, vol, type, att){
+    const A=audioCtx, o=A.createOscillator(), g=A.createGain();
+    o.type=type||"sine"; o.frequency.setValueAtTime(f0, t); if(f1!==f0) o.frequency.exponentialRampToValueAtTime(f1, t+dur*0.8);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+(att||0.005)); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(sfxBus().out); o.start(t); o.stop(t+dur+0.02);
+}
+// 音の部品：ノイズを filter で しぼった音（ftype＝"bandpass"／"highpass"／"lowpass"）
+function sfxNoise(t, dur, vol, ftype, freq, q, att){
+    const A=audioCtx, B=sfxBus(), s=A.createBufferSource(), f=A.createBiquadFilter(), g=A.createGain();
+    s.buffer=B.noise; s.loop=true; f.type=ftype; f.frequency.value=freq; f.Q.value=q||0.7;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t+(att||0.003)); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    s.connect(f); f.connect(g); g.connect(B.out); s.start(t, Math.random()*1.5); s.stop(t+dur+0.02);
+}
+// 恐竜の鳴き声（まん中で生まれた時）
+function sfxDinoCry(t, key){
+    const A=audioCtx, B=sfxBus(), c=RW_SFX_CRY[key]||{ p:1, len:1 }, p=c.p||1, L=c.len||1;
+    const g=A.createGain(), f=A.createBiquadFilter(); g.connect(B.out);
+    if(c.fly){   // プテラノドン：キェーッ（高い声を ふるわせる）
+        const D=0.62*L, lfo=A.createOscillator(), lg=A.createGain(); lfo.frequency.value=11; lg.gain.value=55; lfo.connect(lg); f.connect(g);
+        f.type="bandpass"; f.frequency.value=1700; f.Q.value=0.8;
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.26,t+0.03); g.gain.exponentialRampToValueAtTime(0.16,t+D*0.6); g.gain.exponentialRampToValueAtTime(0.0001,t+D);
+        [["sawtooth",1],["square",1.006]].forEach(([ty,m])=>{ const o=A.createOscillator(); o.type=ty;
+            o.frequency.setValueAtTime(880*m,t); o.frequency.exponentialRampToValueAtTime(1350*m,t+0.09); o.frequency.exponentialRampToValueAtTime(600*m,t+D);
+            lg.connect(o.frequency); o.connect(f); o.start(t); o.stop(t+D+0.03); });
+        lfo.start(t); lfo.stop(t+D+0.03);
+        sfxNoise(t, D*0.8, 0.05, "bandpass", 3200, 1, 0.03);   // 息
+        return;
+    }
+    // ほかの恐竜：ガオーッ（のこぎり波を重ねて、ゴロゴロと ふるわせ、だんだん こもった音に）
+    const D=0.95*L, b=150*p, am=A.createGain(), lfo=A.createOscillator(), lg=A.createGain();
+    f.type="lowpass"; f.Q.value=2; f.frequency.setValueAtTime(2400*Math.sqrt(p),t); f.frequency.exponentialRampToValueAtTime(450*p,t+D);
+    f.connect(am); am.connect(g);
+    am.gain.value=0.7; lfo.frequency.value=24*Math.sqrt(p); lg.gain.value=0.3; lfo.connect(lg); lg.connect(am.gain);   // ゴロゴロ
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.34,t+0.08); g.gain.exponentialRampToValueAtTime(0.22,t+D*0.55); g.gain.exponentialRampToValueAtTime(0.0001,t+D);
+    [[1,"sawtooth",0.5,-8],[1.5,"sawtooth",0.22,6],[0.5,"square",0.32,0]].forEach(([m,ty,v,dt])=>{ const o=A.createOscillator(), og=A.createGain(), fr=b*m;
+        o.type=ty; o.detune.value=dt; og.gain.value=v;
+        o.frequency.setValueAtTime(fr*0.8,t); o.frequency.exponentialRampToValueAtTime(fr*1.15,t+0.15*L); o.frequency.exponentialRampToValueAtTime(fr*0.5,t+D);
+        o.connect(og); og.connect(f); o.start(t); o.stop(t+D+0.03); });
+    lfo.start(t); lfo.stop(t+D+0.03);
+    sfxNoise(t, D*0.9, 0.12, "bandpass", 520*p, 0.6, 0.06);   // 息
+}
+const RW_SFX={
+    egg(){   // 卵が出る：ひゅわん（上がる音）＋キラキラ
+        const t=audioCtx.currentTime+0.01;
+        sfxTone(t, 260, 820, 0.30, 0.30, "sine", 0.01); sfxTone(t, 520, 1640, 0.22, 0.06, "triangle", 0.01);
+        [1568,2093,2637].forEach((n,i)=>sfxTone(t+0.10+i*0.06, n, n, 0.22, 0.07, "triangle", 0.004)); },
+    land(){   // 卵が着地：コトッ
+        const t=audioCtx.currentTime+0.005;
+        sfxTone(t, 330, 170, 0.14, 0.32, "triangle", 0.003); sfxNoise(t, 0.04, 0.16, "bandpass", 1900, 1.4); },
+    rattle(key, i){   // 卵がゆれる：カタッ（だんだん強く）
+        const t=audioCtx.currentTime+0.005, k=Math.min(2, i||0), v=0.10+0.05*k;
+        sfxNoise(t, 0.035, v, "bandpass", 2600+k*300, 3); sfxTone(t, 640, 460, 0.05, v*0.7, "triangle", 0.002); },
+    hatch(key){   // 卵が割れて、恐竜が生まれる：パキッ（＋からの かけら）→ 鳴き声 →（少しあとに）パパパ・パーン♪
+        const t=audioCtx.currentTime+0.005;
+        sfxNoise(t, 0.08, 0.5, "highpass", 2400, 0.7); sfxNoise(t, 0.14, 0.28, "bandpass", 1100, 0.9); sfxTone(t, 240, 90, 0.14, 0.3, "sine", 0.003);
+        [0.05,0.09,0.14,0.2].forEach((d,i)=>sfxNoise(t+d, 0.025, 0.12-i*0.02, "bandpass", 3000+Math.random()*2200, 2));
+        sfxDinoCry(t+0.06, key);
+        const f=t+0.7; [784,1047,1319].forEach((n,i)=>sfxTone(f+i*0.09, n, n, 0.16, 0.12, "triangle", 0.004));
+        [1047,1319,1568].forEach(n=>{ sfxTone(f+0.27, n, n, 1.1, 0.09, "triangle", 0.01); sfxTone(f+0.27, n*2, n*2, 0.6, 0.02, "sine", 0.01); }); }
+};
+function rwSfxMuted(){ try{ return localStorage.getItem(EV_MUTE_KEY)==="1"; }catch(_){ return false; } }   // カード作成画面の「音：なし」
+function rwSfx(name, key, i){
+    if(rwSfxMuted()) return;
+    if(audioCtx.state==="running"){ try{ RW_SFX[name](key, i); }catch(e){ console.warn("[ランキング] 効果音", e); } return; }
+    try{ const p=audioCtx.resume(); if(p && p.catch) p.catch(()=>{}); }catch(_){ }   // 出せるようになっていれば、次からはここで鳴らす
+    try{ if(!window.BroadcastChannel) return; RW.sfxBc=RW.sfxBc||new BroadcastChannel(EV_BC_NAME); RW.sfxBc.postMessage({ type:"sfx", name, key, i, at:Date.now() }); }catch(_){ }   // カード作成画面で鳴らしてもらう（evSfxRelay）
 }
 function rwLoop(){
     if(RW.raf) return;
